@@ -26,9 +26,11 @@ def load_model(model_name):
         )
         processor = AutoProcessor.from_pretrained(model_id)
         model.to(device)
-    elif model_name == "Qwen-Audio-7B-Instruct":
-        model = Qwen2AudioForConditionalGeneration.from_pretrained("Qwen-Audio-7B-Instruct", device_map="auto", low_cpu_mem_usage=True, torch_dtype=torch_dtype)
-        processor = AutoProcessor.from_pretrained("Qwen-Audio-7B-Instruct")
+        # model = None
+        # processor = None
+    elif model_name == "Qwen2-Audio-7B-Instruct":
+        model = Qwen2AudioForConditionalGeneration.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct", device_map="auto", low_cpu_mem_usage=True, torch_dtype=torch_dtype)
+        processor = AutoProcessor.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct")
     else:
         model = None
         processor = None
@@ -44,21 +46,26 @@ def inference(audio, model_name, model, processor):
         print(file_name)
         if model_name == "whisper-large-v3":
             asr = whisper_asr(file_name, model, processor)
-        # elif model_name == "Qwen2-Audio-7B":
-        #     asr = qwen_asr(file_name, model, processor)
+        elif model_name == "Qwen2-Audio-7B-Instruct":
+            asr = qwen_asr(file_name, model, processor)
         else:
             asr = ''
         embed = embed_audio(file_name)
     return asr, embed
 
-# def qwen_asr(file_name, model, processor):
-#     audio, sr = librosa.load(f"{file_name}", sr=processor.feature_extractor.sampling_rate)
-#     prompt = "<|audio_bos|><|AUDIO|><|audio_eos|>Detect the language and recognize the speech: <|ko|>"
-#     inputs = processor(text=prompt, audios=[audio], return_tensors="pt").to(device)
-#     generated_ids = model.generate(**inputs, max_length=256)
-#     generated_ids = generated_ids[:, inputs.input_ids.size(1):]
-#     prediction = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-#     return prediction
+def qwen_asr(file_name, model, processor):
+    audio, sr = librosa.load(f"{file_name}", sr=processor.feature_extractor.sampling_rate)
+    conversation = [
+        {"role": "user", "content": [
+            {"type": "audio", "audio_url": f"{file_name}"}
+        ]}
+    ]
+    text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
+    inputs = processor(text=text, audios=[audio], return_tensors="pt").to(device)
+    generated_ids = model.generate(**inputs, max_length=256)
+    generated_ids = generated_ids[:, inputs.input_ids.size(1):]
+    prediction = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+    return prediction
 
 def whisper_asr(file_name, model, processor):
     pipe = pipeline(
@@ -127,28 +134,50 @@ audio = audiorecorder("", "", key=f"audio_{len(st.session_state.messages)}")
 # React to user input
 if (prompt := st.chat_input("Your message")) or len(audio):
     # If it's coming from the audio recorder transcribe the message with whisper.cpp
-    if len(audio)>0:
-        with st.spinner():
-            prompt, embed = inference(audio, model_name, model, processor)
+    if model_name == "whisper-large-v3":
+        if len(audio)>0:
+            with st.spinner():
+                prompt, embed = inference(audio, model_name, model, processor)
 
-    # Display user message in chat message container
-    with st.chat_message("user"):
-        st.markdown(
-            '\n\n'.join(prompt, embed) if voice_embed else prompt,
-            unsafe_allow_html=True
-        )
-    # Add user message to chat history
-    st.session_state.messages.append({
-        "role": "user", 
-        "content": prompt,
-        "embed": embed
-    })
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(
+                '\n\n'.join([prompt, embed]) if voice_embed else prompt,
+                unsafe_allow_html=True
+            )
+        # Add user message to chat history
+        st.session_state.messages.append({
+            "role": "user", 
+            "content": prompt,
+            "embed": embed
+        })
 
-    # Display assistant response in chat message container
-    with st.chat_message("assistant"):
-        llm = ChatOpenAI(model="gpt-4o-2024-08-06")
-        llm_response = llm.invoke(prompt).content
-        st.markdown(llm_response)
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            llm = ChatOpenAI(model="gpt-4o-2024-08-06")
+            llm_response = llm.invoke(prompt).content
+            st.markdown(llm_response)
+        st.session_state.messages.append({"role": "assistant", "content": llm_response})
+    else:
+        if len(audio)>0:
+            with st.spinner():
+                prompt, embed = inference(audio, model_name, model, processor)
+
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(
+                '\n\n'.join([embed]) if voice_embed else prompt,
+                unsafe_allow_html=True
+            )
+        # Add user message to chat history
+        st.session_state.messages.append({
+            "role": "user", 
+            "embed": embed
+        })
+
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            st.markdown(prompt)
         
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": llm_response})
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": prompt})
