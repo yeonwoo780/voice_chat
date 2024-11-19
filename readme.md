@@ -29,7 +29,8 @@ pip install -r requirements_macos.txt
 ## Run
 
 ```bash
-streamlit run web_app.py
+streamlit run web_app_asr.py
+streamlit run web_app_chat.py
 ```
 
 - 모델 change시 현재 memory cache 문제 해결 필요

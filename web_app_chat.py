@@ -56,8 +56,10 @@ def inference(audio, model_name, model, processor):
 def qwen_asr(file_name, model, processor):
     audio, sr = librosa.load(f"{file_name}", sr=processor.feature_extractor.sampling_rate)
     conversation = [
+        {'role': 'system', 'content': 'You are a helpful assistant.'},
         {"role": "user", "content": [
-            {"type": "audio", "audio_url": f"{file_name}"}
+            {"type": "audio", "audio_url": f"{file_name}"},
+            {"type": "text", "text": "What does it say and what is the gender? please say korean!"}
         ]}
     ]
     text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
