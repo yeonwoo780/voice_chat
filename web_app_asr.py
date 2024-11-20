@@ -26,10 +26,12 @@ def load_model(model_name):
         )
         processor = AutoProcessor.from_pretrained(model_id)
         model.to(device)
+        model = torch.compile(model)
         # model = None
         # processor = None
     elif model_name == "Qwen2-Audio-7B":
         model = Qwen2AudioForConditionalGeneration.from_pretrained("Qwen/Qwen2-Audio-7B", device_map="auto", low_cpu_mem_usage=True, torch_dtype=torch_dtype)
+        model = torch.compile(model)
         processor = AutoProcessor.from_pretrained("Qwen/Qwen2-Audio-7B")
     else:
         model = None

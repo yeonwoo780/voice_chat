@@ -26,10 +26,12 @@ def load_model(model_name):
         )
         processor = AutoProcessor.from_pretrained(model_id)
         model.to(device)
+        model = torch.compile(model)
         # model = None
         # processor = None
     elif model_name == "Qwen2-Audio-7B-Instruct":
         model = Qwen2AudioForConditionalGeneration.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct", device_map="auto", low_cpu_mem_usage=True, torch_dtype=torch_dtype)
+        model = torch.compile(model)
         processor = AutoProcessor.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct")
     else:
         model = None
@@ -45,21 +47,21 @@ def inference(audio, model_name, model, processor):
         file_name = temp.name
         print(file_name)
         if model_name == "whisper-large-v3":
-            asr = whisper_asr(file_name, model, processor)
+            res = whisper_asr(file_name, model, processor)
         elif model_name == "Qwen2-Audio-7B-Instruct":
-            asr = qwen_asr(file_name, model, processor)
+            res = qwen_answer(file_name, model, processor)
         else:
-            asr = ''
+            res = ''
         embed = embed_audio(file_name)
-    return asr, embed
+    return res, embed
 
-def qwen_asr(file_name, model, processor):
+def qwen_answer(file_name, model, processor):
     audio, sr = librosa.load(f"{file_name}", sr=processor.feature_extractor.sampling_rate)
     conversation = [
-        {'role': 'system', 'content': 'You are a helpful assistant.'},
+        {'role': 'system', 'content': '너는 유용한 비서야.'},
         {"role": "user", "content": [
             {"type": "audio", "audio_url": f"{file_name}"},
-            {"type": "text", "text": "What does it say and what is the gender? please say korean!"}
+            # {"type": "text", "text": "What does it say and what is the gender? please say korean!"}
         ]}
     ]
     text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
@@ -163,7 +165,7 @@ if (prompt := st.chat_input("Your message")) or len(audio):
     else:
         if len(audio)>0:
             with st.spinner():
-                prompt, embed = inference(audio, model_name, model, processor)
+                res, embed = inference(audio, model_name, model, processor)
 
         # Display user message in chat message container
         with st.chat_message("user"):
@@ -179,7 +181,7 @@ if (prompt := st.chat_input("Your message")) or len(audio):
 
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            st.markdown(prompt)
+            st.markdown(res)
         
         # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": prompt})
+        st.session_state.messages.append({"role": "assistant", "content": res})

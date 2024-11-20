@@ -70,9 +70,9 @@ threadpoolctl==3.5.0
 tiktoken==0.8.0
 tokenizers==0.20.3
 toml==0.10.2
-torch==2.5.1+cpu
-torchaudio==2.5.1+cpu
-torchvision==0.20.1+cpu
+torch
+torchaudio
+torchvision
 tqdm==4.67.0
 transformers==4.46.2
 tzdata==2024.2
