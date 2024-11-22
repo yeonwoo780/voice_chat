@@ -26,10 +26,12 @@ def load_model(model_name):
         )
         processor = AutoProcessor.from_pretrained(model_id)
         model.to(device)
+        model = torch.compile(model)
         # model = None
         # processor = None
     elif model_name == "Qwen2-Audio-7B-Instruct":
         model = Qwen2AudioForConditionalGeneration.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct", device_map="auto", low_cpu_mem_usage=True, torch_dtype=torch_dtype)
+        model = torch.compile(model)
         processor = AutoProcessor.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct")
     else:
         model = None
@@ -43,28 +45,28 @@ def inference(audio, model_name, model, processor):
         with open(f"{temp.name}", "wb") as f:
             f.write(audio.export().read())
         file_name = temp.name
-        print(file_name)
+        # print(file_name)
         if model_name == "whisper-large-v3":
-            asr = whisper_asr(file_name, model, processor)
+            res = whisper_asr(file_name, model, processor)
         elif model_name == "Qwen2-Audio-7B-Instruct":
-            asr = qwen_asr(file_name, model, processor)
+            res = qwen_answer(file_name, model, processor)
         else:
-            asr = ''
+            res = ''
         embed = embed_audio(file_name)
-    return asr, embed
+    return res, embed
 
-def qwen_asr(file_name, model, processor):
+def qwen_answer(file_name, model, processor):
     audio, sr = librosa.load(f"{file_name}", sr=processor.feature_extractor.sampling_rate)
     conversation = [
-        {'role': 'system', 'content': 'You are a helpful assistant.'},
+        {'role': 'system', 'content': 'You are a helpful voice assistant.'},
         {"role": "user", "content": [
             {"type": "audio", "audio_url": f"{file_name}"},
-            {"type": "text", "text": "What does it say and what is the gender? please say korean!"}
+            # {"type": "text", "text": "What does it say and what is the gender? please say korean!"}
         ]}
     ]
     text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
-    inputs = processor(text=text, audios=[audio], return_tensors="pt").to(device)
-    generated_ids = model.generate(**inputs, max_length=256)
+    inputs = processor(text=text, audios=[audio], return_tensors="pt", sampling_rate = processor.feature_extractor.sampling_rate).to(device)
+    generated_ids = model.generate(**inputs, max_new_tokens=256, do_sample=True, temperature=0.2)
     generated_ids = generated_ids[:, inputs.input_ids.size(1):]
     prediction = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     return prediction
@@ -76,7 +78,7 @@ def whisper_asr(file_name, model, processor):
         tokenizer=processor.tokenizer,
         feature_extractor=processor.feature_extractor,
         torch_dtype=torch_dtype,
-        device=device,
+        device=device
     )
     # audio = librosa.load(BytesIO(f"{file_name}"))
     result = pipe(f"{file_name}", generate_kwargs={"language": "korean"})
@@ -106,21 +108,24 @@ def rewind():
 # Streamlit
 st.title("🎙️Voice ChatBot")
 
+# Initialize chat history
+if "messages" not in st.session_state:
+    load_model("whisper-large-v3")
+    load_model("Qwen2-Audio-7B-Instruct")
+    clear_history()
+
 with st.sidebar:
     st.header("Model")
     model_name = st.selectbox("Audio Model", ["whisper-large-v3", "Qwen2-Audio-7B-Instruct"])
     model, processor = load_model(model_name)
     st.header("Control")
-    voice_embed = st.toggle('Show Audio', value=True)
+    # voice_embed = st.toggle('Show Audio', value=True)
+    voice_embed = True
     btn_col1, btn_col2 = st.columns(2)
     with btn_col1:
         st.button("Rewind", on_click=rewind, use_container_width=True, type='primary')
     with btn_col2:
         st.button("Clear", on_click=clear_history, use_container_width=True)
-
-# Initialize chat history
-if "messages" not in st.session_state:
-    clear_history()
 
 # Display chat messages from history on app rerun
 for msg in st.session_state.messages:
@@ -134,7 +139,8 @@ for msg in st.session_state.messages:
 audio = audiorecorder("", "", key=f"audio_{len(st.session_state.messages)}")
 
 # React to user input
-if (prompt := st.chat_input("Your message")) or len(audio):
+# if (prompt := st.chat_input("Your message")) or len(audio):
+if len(audio):
     # If it's coming from the audio recorder transcribe the message with whisper.cpp
     if model_name == "whisper-large-v3":
         if len(audio)>0:
@@ -163,7 +169,7 @@ if (prompt := st.chat_input("Your message")) or len(audio):
     else:
         if len(audio)>0:
             with st.spinner():
-                prompt, embed = inference(audio, model_name, model, processor)
+                res, embed = inference(audio, model_name, model, processor)
 
         # Display user message in chat message container
         with st.chat_message("user"):
@@ -179,7 +185,8 @@ if (prompt := st.chat_input("Your message")) or len(audio):
 
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            st.markdown(prompt)
+            st.markdown(res)
         
         # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": prompt})
+        st.session_state.messages.append({"role": "assistant", "content": res})
+    st.rerun()
