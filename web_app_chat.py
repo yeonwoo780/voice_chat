@@ -66,7 +66,7 @@ def qwen_answer(file_name, model, processor):
     ]
     text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
     inputs = processor(text=text, audios=[audio], return_tensors="pt", sampling_rate = processor.feature_extractor.sampling_rate).to(device)
-    generated_ids = model.generate(**inputs, max_new_tokens=256, do_sample=True, temperature=0.7)
+    generated_ids = model.generate(**inputs, max_new_tokens=256, do_sample=True, temperature=0.2)
     generated_ids = generated_ids[:, inputs.input_ids.size(1):]
     prediction = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     return prediction

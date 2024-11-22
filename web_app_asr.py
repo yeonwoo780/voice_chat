@@ -100,6 +100,12 @@ def rewind():
 # Streamlit
 st.title("🎙️Automatic Speech Recognition")
 
+# Initialize chat history
+if "messages" not in st.session_state:
+    load_model("whisper-large-v3")
+    load_model("Qwen2-Audio-7B-Instruct")
+    clear_history()
+
 with st.sidebar:
     st.header("Model")
     model_name = st.selectbox("ASR model", ["whisper-large-v3", "Qwen2-Audio-7B"])
@@ -111,10 +117,6 @@ with st.sidebar:
         st.button("Rewind", on_click=rewind, use_container_width=True, type='primary')
     with btn_col2:
         st.button("Clear", on_click=clear_history, use_container_width=True)
-
-# Initialize chat history
-if "messages" not in st.session_state:
-    clear_history()
 
 # Display chat messages from history on app rerun
 for msg in st.session_state.messages:
