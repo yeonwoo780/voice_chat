@@ -230,7 +230,7 @@ if (prompt := st.chat_input("Your message")) or len(audio):
             st.markdown(llm_response)
             llm_translate = _llm_translate(llm_response, translate_language)
             tts_embed = tts_inference(llm_translate, tts_model, tts_processor, translate_language)
-            st.markdown(f"{translate_language}: {llm_translate}")
+            st.markdown(f"\n---\n{translate_language}: {llm_translate}")
             st.markdown(
                 '\n\n'.join([tts_embed]),
                 unsafe_allow_html=True
@@ -258,7 +258,7 @@ if (prompt := st.chat_input("Your message")) or len(audio):
             st.markdown(prompt)
             llm_translate = _llm_translate(prompt, translate_language)
             tts_embed = tts_inference(llm_translate, tts_model, tts_processor, translate_language)
-            st.markdown(f"{translate_language}: {llm_translate}")
+            st.markdown(f"\n---\n{translate_language}: {llm_translate}")
             st.markdown(
                 '\n\n'.join([tts_embed]),
                 unsafe_allow_html=True
