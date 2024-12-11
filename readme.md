@@ -31,6 +31,18 @@ conda activate voice
 ```
 
 ### Linux
+- gpu
+```bash
+sudo apt update
+sudo apt install ffmpeg
+sudo apt install portaudio19-dev
+sudo apt install gcc
+pip install audiorecorder
+pip install coqui-tts
+pip install hangul-romanize
+pip install -r requirements.txt
+```
+
 - cpu
 ```bash
 sudo apt update
@@ -40,17 +52,6 @@ sudo apt install gcc
 pip install audiorecorder
 pip install -r requirements_cpu.txt
 ```
-
-- gpu
-```bash
-sudo apt update
-sudo apt install ffmpeg
-sudo apt install portaudio19-dev
-sudo apt install gcc
-pip install audiorecorder
-pip install -r requirements.txt
-```
-
 
 ### MacOS
 ```zsh
