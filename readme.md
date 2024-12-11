@@ -75,8 +75,6 @@ streamlit run web_app_chat.py
 
 - pip install coqui-tts
 - pip install hangul-romanize # korean
-- pip install cutlet # japan
-- pip install mecab-python3 # japan
 - sample notebooks[notebooks](notebooks/tts/XTTS-v2.ipynb)
 
 **language 지원**
