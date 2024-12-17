@@ -40,8 +40,8 @@ def load_model(model_name):
     return model, processor
 
 @st.cache_resource  # 👈 Add the caching decorator
-def load_tts_model(translate_language):
-    if translate_language == "arabic":
+def load_tts_model(lang):
+    if lang == "arabic":
         tts_model_dir = "model/XTTS-v2/"
         tts_config = XttsConfig()
         tts_config.load_json(f"{tts_model_dir}config.json")
@@ -59,14 +59,14 @@ def load_tts_model(translate_language):
     tts_model = torch.compile(tts_model)
     return tts_model, tts_processor
 
-def language_dict(translate_language):
+def language_dict(lang):
     translate_dict = {
         "korean": "ko",
         "japanese": "jp",
         "english": "en",
         "arabic": "ar"
     }
-    return translate_dict[translate_language]
+    return translate_dict[lang]
 
 def bark_tts(target_text, tts_model, tts_processor):
     inputs = tts_processor(
@@ -78,24 +78,24 @@ def bark_tts(target_text, tts_model, tts_processor):
     speech_values = speech_values.cpu().numpy().squeeze()
     return speech_values, sampling_rate
 
-def XTTS_tts(target_text, tts_model, tts_processor, translate_language):
+def XTTS_tts(target_text, tts_model, tts_processor, lang):
     gpt_cond_latent, speaker_embedding = tts_processor
     speech_values = tts_model.inference(
         text=target_text,
         gpt_cond_latent=gpt_cond_latent,
         speaker_embedding=speaker_embedding,
-        language=language_dict(translate_language),
+        language=language_dict(lang),
         enable_text_splitting=True
     )
     sampling_rate = 24000
     speech_values = speech_values['wav']
     return speech_values, sampling_rate
 
-def tts_inference(target_text, tts_model, tts_processor, translate_language):
+def tts_inference(target_text, tts_model, tts_processor, lang):
     with NamedTemporaryFile(suffix=".mp3") as temp:
         file_name = temp.name
-        if translate_language == "arabic":
-            speech_values, sampling_rate = XTTS_tts(target_text, tts_model, tts_processor, translate_language)
+        if lang == "arabic":
+            speech_values, sampling_rate = XTTS_tts(target_text, tts_model, tts_processor, lang)
         else:
             speech_values, sampling_rate = bark_tts(target_text, tts_model, tts_processor)
         scipy.io.wavfile.write(file_name, sampling_rate, speech_values)
@@ -103,25 +103,25 @@ def tts_inference(target_text, tts_model, tts_processor, translate_language):
         return tts_embed
 
 
-def inference(audio, model_name, model, processor):
+def inference(audio, model_name, model, processor, lang):
     # Save audio to a file:
     with NamedTemporaryFile(suffix=".mp3") as temp:
         with open(f"{temp.name}", "wb") as f:
             f.write(audio.export().read())
         file_name = temp.name
         if model_name == "whisper-large-v3":
-            asr = whisper_asr(file_name, model, processor)
+            asr = whisper_asr(file_name, model, processor, lang)
         elif model_name == "Qwen2-Audio-7B-Instruct":
-            asr = qwen_asr(file_name, model, processor)
+            asr = qwen_asr(file_name, model, processor, lang)
         else:
             asr = ''
         embed = embed_audio(file_name)
     return asr, embed
 
-def qwen_asr(file_name, model, processor):
+def qwen_asr(file_name, model, processor, lang):
     audio, sr = librosa.load(f"{file_name}", sr=processor.feature_extractor.sampling_rate)
     conversation = [
-        {'role': 'system', 'content': 'You are a helpful voice assistant.'},
+        {'role': 'system', 'content': f'You are a helpful voice assistant.\nAnswer in the following language.\n\nLanguage: {lang}'},
         {"role": "user", "content": [
             {"type": "audio", "audio_url": f"{file_name}"},
         ]}
@@ -133,7 +133,7 @@ def qwen_asr(file_name, model, processor):
     prediction = processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     return prediction
 
-def whisper_asr(file_name, model, processor):
+def whisper_asr(file_name, model, processor, lang):
     pipe = pipeline(
         "automatic-speech-recognition",
         model=model,
@@ -142,8 +142,7 @@ def whisper_asr(file_name, model, processor):
         torch_dtype=torch_dtype,
         device=device,
     )
-    # audio = librosa.load(BytesIO(f"{file_name}"))
-    result = pipe(f"{file_name}", generate_kwargs={"language": "korean"})
+    result = pipe(f"{file_name}", generate_kwargs={"language": lang})
     prediction =  result['text']
     return prediction
 
@@ -181,9 +180,9 @@ if "messages" not in st.session_state:
 with st.sidebar:
     st.header("Model")
     model_name = st.selectbox("Audio Model", LLM_MODELS)
-    translate_language = st.selectbox("TTS Translate Language", TTS_MODELS)
+    lang = st.selectbox("Language", TTS_MODELS)
     model, processor = load_model(model_name)
-    tts_model, tts_processor = load_tts_model(translate_language)
+    tts_model, tts_processor = load_tts_model(lang)
     st.header("Control")
     voice_embed = st.toggle('Show Audio', value=True)
     btn_col1, btn_col2 = st.columns(2)
@@ -211,7 +210,7 @@ if (prompt := st.chat_input("Your message")) or len(audio):
     if model_name == "whisper-large-v3":
         if len(audio)>0:
             with st.spinner():
-                prompt, embed = inference(audio, model_name, model, processor)
+                prompt, embed = inference(audio, model_name, model, processor, lang)
             content = '\n\n'.join([prompt, embed]) if voice_embed else prompt
         else:
             content = prompt
@@ -230,9 +229,7 @@ if (prompt := st.chat_input("Your message")) or len(audio):
                 llm = ChatOpenAI(model="gpt-4o-2024-08-06")
                 llm_response = llm.invoke(prompt).content
                 st.markdown(llm_response)
-                # llm_translate = _llm_translate(llm_response, translate_language)
-                tts_embed = tts_inference(llm_response, tts_model, tts_processor, translate_language)
-                # st.markdown(f"\n---\n{translate_language}: {llm_translate}")
+                tts_embed = tts_inference(llm_response, tts_model, tts_processor, lang)
                 st.markdown(
                     '\n\n'.join([tts_embed]),
                     unsafe_allow_html=True
@@ -240,7 +237,7 @@ if (prompt := st.chat_input("Your message")) or len(audio):
     else:
         if len(audio)>0:
             with st.spinner():
-                llm_response, embed = inference(audio, model_name, model, processor)
+                llm_response, embed = inference(audio, model_name, model, processor, lang)
             content = embed
         else:
             content = prompt
@@ -257,7 +254,7 @@ if (prompt := st.chat_input("Your message")) or len(audio):
         with st.chat_message("assistant"):
             with st.spinner():
                 st.markdown(llm_response)
-                tts_embed = tts_inference(llm_response, tts_model, tts_processor, translate_language)
+                tts_embed = tts_inference(llm_response, tts_model, tts_processor, lang)
                 st.markdown(tts_embed, unsafe_allow_html=True)
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": llm_response, "tts_embed": tts_embed})
