@@ -30,6 +30,13 @@ conda create -n voice
 conda activate voice
 ```
 
+### Model Setting
+
+- xTTS : `data/ttsvoice` 에 output target으로 잡을 audio파일 5개 정도 저장 필수
+```bash
+huggingface-cli download coqui/XTTS-v2 --local-dir model/XTTS-v2
+```
+
 ### Linux
 - gpu
 ```bash
