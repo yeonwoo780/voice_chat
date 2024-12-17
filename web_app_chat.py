@@ -31,14 +31,12 @@ def load_model(model_name):
         )
         processor = AutoProcessor.from_pretrained(model_id)
         model.to(device)
-        # model = None
-        # processor = None
     elif model_name == "Qwen2-Audio-7B-Instruct":
         model = Qwen2AudioForConditionalGeneration.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct", device_map="auto", low_cpu_mem_usage=True, torch_dtype=torch_dtype)
         processor = AutoProcessor.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct")
     else:
-        model = None
-        processor = None
+        raise
+    model = torch.compile(model)
     return model, processor
 
 @st.cache_resource  # 👈 Add the caching decorator
@@ -50,16 +48,16 @@ def load_tts_model(translate_language):
         tts_model = Xtts.init_from_config(tts_config)
         tts_model.load_checkpoint(tts_config, checkpoint_dir=f"{tts_model_dir}", eval=True)
         tts_model.to(device)
-        
         tts_paths = "data/ttsvoice/"
         reference_audios = [tts_paths + i for i in os.listdir(f"{tts_paths}")]
         tts_processor = tts_model.get_conditioning_latents(audio_path=reference_audios)
-        return tts_model, tts_processor
     else:
         tts_processor = AutoProcessor.from_pretrained("suno/bark")
         tts_model = AutoModel.from_pretrained("suno/bark")
         tts_model.to(device)
-        return tts_model, tts_processor
+
+    tts_model = torch.compile(tts_model)
+    return tts_model, tts_processor
 
 def language_dict(translate_language):
     translate_dict = {
@@ -126,7 +124,6 @@ def qwen_asr(file_name, model, processor):
         {'role': 'system', 'content': 'You are a helpful voice assistant.'},
         {"role": "user", "content": [
             {"type": "audio", "audio_url": f"{file_name}"},
-            # {"type": "text", "text": "What does it say and what is the gender? please say korean!"}
         ]}
     ]
     text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
@@ -154,11 +151,8 @@ def embed_audio(file_path: str):
     with open(file_path, "rb") as f:
         data = f.read()
         b64 = base64.b64encode(data).decode()
-        return f"""
-<audio controls>
-<source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-</audio>
-        """.strip()
+    html = f'<audio controls>\n    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">\n    Your browser does not support the audio element.\n</audio>'
+    return html
 
 def clear_history():
     st.session_state.messages = []
@@ -170,13 +164,24 @@ def rewind():
             msg = st.session_state.messages.pop()
 
 
+LLM_MODELS = ["whisper-large-v3", "Qwen2-Audio-7B-Instruct"]
+TTS_MODELS = ["korean", "japanese", "english", "arabic"]
+
 # Streamlit
 st.title("🎙️Voice ChatBot")
 
+# Initialize chat history
+if "messages" not in st.session_state:
+    for _model in LLM_MODELS:
+        load_model(_model)
+    for _model in TTS_MODELS:
+        load_tts_model(_model)
+    clear_history()
+
 with st.sidebar:
     st.header("Model")
-    model_name = st.selectbox("Audio Model", ["whisper-large-v3", "Qwen2-Audio-7B-Instruct"])
-    translate_language = st.selectbox("TTS Translate Language", ["korean", "japanese", "english", "arabic"])
+    model_name = st.selectbox("Audio Model", LLM_MODELS)
+    translate_language = st.selectbox("TTS Translate Language", TTS_MODELS)
     model, processor = load_model(model_name)
     tts_model, tts_processor = load_tts_model(translate_language)
     st.header("Control")
@@ -187,16 +192,14 @@ with st.sidebar:
     with btn_col2:
         st.button("Clear", on_click=clear_history, use_container_width=True)
 
-# Initialize chat history
-if "messages" not in st.session_state:
-    clear_history()
-
 # Display chat messages from history on app rerun
-for msg in st.session_state.messages:
+for i, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg["role"]):
         content = msg.get('content', '')
         if voice_embed:
-            embed = msg.get('embed', '')
+            embed = msg.get('tts_embed', '')
+            if i == (len(st.session_state.messages) - 1):
+                embed = embed.replace('<audio controls>', '<audio controls autoplay>')
             content = '\n\n'.join([content, embed])
         st.markdown(content, unsafe_allow_html=True)
 
@@ -209,59 +212,53 @@ if (prompt := st.chat_input("Your message")) or len(audio):
         if len(audio)>0:
             with st.spinner():
                 prompt, embed = inference(audio, model_name, model, processor)
-
+            content = '\n\n'.join([prompt, embed]) if voice_embed else prompt
+        else:
+            content = prompt
         # Display user message in chat message container
         with st.chat_message("user"):
-            st.markdown(
-                '\n\n'.join([prompt, embed]) if voice_embed else prompt,
-                unsafe_allow_html=True
-            )
+            st.markdown(content, unsafe_allow_html=True)
         # Add user message to chat history
         st.session_state.messages.append({
             "role": "user", 
-            "content": prompt,
-            "embed": embed
+            "content": content
         })
 
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            llm = ChatOpenAI(model="gpt-4o-2024-08-06")
-            llm_response = llm.invoke(prompt).content
-            st.markdown(llm_response)
-            llm_translate = _llm_translate(llm_response, translate_language)
-            tts_embed = tts_inference(llm_translate, tts_model, tts_processor, translate_language)
-            st.markdown(f"\n---\n{translate_language}: {llm_translate}")
-            st.markdown(
-                '\n\n'.join([tts_embed]),
-                unsafe_allow_html=True
-            )
-        st.session_state.messages.append({"role": "assistant", "content": llm_response, "translate": llm_translate, "tts_embed": tts_embed})
+            with st.spinner():
+                llm = ChatOpenAI(model="gpt-4o-2024-08-06")
+                llm_response = llm.invoke(prompt).content
+                st.markdown(llm_response)
+                # llm_translate = _llm_translate(llm_response, translate_language)
+                tts_embed = tts_inference(llm_response, tts_model, tts_processor, translate_language)
+                # st.markdown(f"\n---\n{translate_language}: {llm_translate}")
+                st.markdown(
+                    '\n\n'.join([tts_embed]),
+                    unsafe_allow_html=True
+                )
     else:
         if len(audio)>0:
             with st.spinner():
-                prompt, embed = inference(audio, model_name, model, processor)
-
+                llm_response, embed = inference(audio, model_name, model, processor)
+            content = embed
+        else:
+            content = prompt
         # Display user message in chat message container
         with st.chat_message("user"):
-            st.markdown(
-                '\n\n'.join([embed]) if voice_embed else prompt,
-                unsafe_allow_html=True
-            )
+            st.markdown(content, unsafe_allow_html=True)
         # Add user message to chat history
         st.session_state.messages.append({
             "role": "user", 
-            "embed": embed
+            "content": content
         })
 
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            st.markdown(prompt)
-            llm_translate = _llm_translate(prompt, translate_language)
-            tts_embed = tts_inference(llm_translate, tts_model, tts_processor, translate_language)
-            st.markdown(f"\n---\n{translate_language}: {llm_translate}")
-            st.markdown(
-                '\n\n'.join([tts_embed]),
-                unsafe_allow_html=True
-            )
-        # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": prompt, "translate": llm_translate, "tts_embed": tts_embed})
+            with st.spinner():
+                st.markdown(llm_response)
+                tts_embed = tts_inference(llm_response, tts_model, tts_processor, translate_language)
+                st.markdown(tts_embed, unsafe_allow_html=True)
+    # Add assistant response to chat history
+    st.session_state.messages.append({"role": "assistant", "content": llm_response, "tts_embed": tts_embed})
+    st.rerun()
