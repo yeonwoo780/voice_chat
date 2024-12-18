@@ -49,15 +49,15 @@ pip install coqui-tts
 pip install hangul-romanize
 pip install -r requirements.txt
 ```
-
-- cpu
+- melotts
 ```bash
-sudo apt update
-sudo apt install ffmpeg
-sudo apt install portaudio19-dev
-sudo apt install gcc
-pip install audiorecorder
-pip install -r requirements_cpu.txt
+pip install git+https://github.com/myshell-ai/MeloTTS.git
+python -m unidic download
+```
+
+```python
+import nltk
+nltk.download("all")
 ```
 
 ### MacOS
