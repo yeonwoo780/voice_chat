@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from translate import _llm_translate
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
+from melo.api import TTS as meloTTS
 import scipy
 
 # API KEY 정보로드
@@ -51,15 +52,17 @@ def load_tts_model(lang):
         tts_paths = "data/ttsvoice/"
         reference_audios = [tts_paths + i for i in os.listdir(f"{tts_paths}")]
         tts_processor = tts_model.get_conditioning_latents(audio_path=reference_audios)
-    else:
-        tts_processor = AutoProcessor.from_pretrained("suno/bark")
-        tts_model = AutoModel.from_pretrained("suno/bark")
-        tts_model.to(device)
+    elif lang == "korean" or lang == "japanese":
+        tts_model = meloTTS(language=meloTTS_language_option(lang), device=device)
+        tts_processor = tts_model.hps.data.spk2id
+    elif lang == "english":
+        tts_model = meloTTS(language=meloTTS_language_option(lang)[0], device=device)
+        tts_processor = tts_model.hps.data.spk2id
 
     tts_model = torch.compile(tts_model)
     return tts_model, tts_processor
 
-def language_dict(lang):
+def xTTS_language_option(lang):
     translate_dict = {
         "korean": "ko",
         "japanese": "jp",
@@ -68,15 +71,13 @@ def language_dict(lang):
     }
     return translate_dict[lang]
 
-def bark_tts(target_text, tts_model, tts_processor):
-    inputs = tts_processor(
-        text = [target_text],
-        return_tensors="pt",
-    ).to(device)
-    speech_values = tts_model.generate(**inputs, do_sample=True)
-    sampling_rate = tts_model.generation_config.sample_rate
-    speech_values = speech_values.cpu().numpy().squeeze()
-    return speech_values, sampling_rate
+def meloTTS_language_option(lang):
+    translate_dict = {
+        "korean": "KR",
+        "japanese": "JP",
+        "english": ["EN","EN-US"],
+    }
+    return translate_dict[lang]
 
 def XTTS_tts(target_text, tts_model, tts_processor, lang):
     gpt_cond_latent, speaker_embedding = tts_processor
@@ -84,7 +85,7 @@ def XTTS_tts(target_text, tts_model, tts_processor, lang):
         text=target_text,
         gpt_cond_latent=gpt_cond_latent,
         speaker_embedding=speaker_embedding,
-        language=language_dict(lang),
+        language=xTTS_language_option(lang),
         enable_text_splitting=True
     )
     sampling_rate = 24000
@@ -96,9 +97,12 @@ def tts_inference(target_text, tts_model, tts_processor, lang):
         file_name = temp.name
         if lang == "arabic":
             speech_values, sampling_rate = XTTS_tts(target_text, tts_model, tts_processor, lang)
-        else:
-            speech_values, sampling_rate = bark_tts(target_text, tts_model, tts_processor)
-        scipy.io.wavfile.write(file_name, sampling_rate, speech_values)
+            scipy.io.wavfile.write(file_name, sampling_rate, speech_values)
+        elif lang == "korean" or lang == "japanese":
+            tts_model.tts_to_file(target_text, tts_processor[meloTTS_language_option(lang)], file_name, speed=1.0)
+        elif lang == "english":
+            tts_model.tts_to_file(target_text, tts_processor[meloTTS_language_option(lang)[1]], file_name, speed=1.0)
+
         tts_embed = embed_audio(file_name)
         return tts_embed
 
