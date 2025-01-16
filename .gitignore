@@ -5,3 +5,4 @@ model/
 fish-speech/
 .streamlit/
 data/
+log.txt

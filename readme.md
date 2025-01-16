@@ -68,6 +68,28 @@ pip install audiorecorder ffmpeg-python
 pip install -r requirements_macos.txt
 ```
 
+## Evaluation
+
+### Evaluation Dataset : common_voice_17_0
+
+- seed : 42
+- down_vote : 0
+
+### WER (Word Error Rate) : (S+D+I)/N
+
+- D : 음성 인식된 텍스트에 잘못 삭제된 단어 수
+- S : 음성 인식된 텍스트에 잘못 대체된 단어 수
+- I : 음성 인식된 텍스트에 잘못 추가된 단어 수  
+- N : 정답 텍스트의 단어 수
+
+|     | Korean | English |
+| --- | --- | --- |
+| Dataset | common_voice_17_0 | common_voice_17_0 |
+| Len | 30  | 30  |
+| Wer | 14.71%  |     |
+| EvalCode |  Eval/korean_wer.py [link](Eval/korean_wer.py)   |     |
+| resultFile |  resultEval/korean_wer_eval.csv [link](resultEval/korean_wer_eval.csv)   |     |
+
 ## Run
 
 ```bash
