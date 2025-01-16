@@ -6,36 +6,30 @@ from jiwer import compute_measures
 import pandas as pd
 import os
 import re
+from transformers.models.whisper.english_normalizer import BasicTextNormalizer
+
+normalizer = BasicTextNormalizer()
 
 wer_metric = load("wer")
 def Eval(reference, prediction):
     wer = wer_metric.compute(references=[reference], predictions=[prediction])
     return wer
 
-def replace_sentence(reference):
-    """
-    원본 Text 전처리. ', " 삭제 후 양 옆 공백 삭제
-    """
-    reference = reference.replace("'","").replace('"',"")
-    reference = reference.strip()
-    return reference
-
-def strip_special_chars(reference):
-    "특수문자 삭제"
-    reference = re.sub(r'[^가-힣a-zA-Z0-9\s]', '', reference)
-    return reference
+def english_normalize(text):
+    norm_text = normalizer(text)
+    return norm_text
 
 if __name__ == "__main__":
     Dataset.cleanup_cache_files
     dname = "mozilla-foundation/common_voice_17_0"
-    dlang = "korean"
+    dlang = "english"
     print(f"Load Dataset: {dname}\nLanguage: {dlang}")
-    dataset = load_dataset("mozilla-foundation/common_voice_17_0", "ko", split="validation", streaming=True)
+    dataset = load_dataset("mozilla-foundation/common_voice_17_0", "en", split="validation", streaming=True)
 
     seed = 42
     print(f"Set Dataset seed: {seed}")
 
-    tsetnum = 300
+    tsetnum = 1000
     print(f"Get Test Dataset: {tsetnum}")
     test_datasets = dataset.shuffle(seed=seed).take(tsetnum)
 
@@ -68,14 +62,13 @@ if __name__ == "__main__":
     for test_dataset in test_datasets:
         if test_dataset['down_votes'] == 0 and test_dataset['up_votes'] > 3:
             audio_info = test_dataset['audio']
-            language = "korean"
+            language = "english"
             file_path = audio_info['path']
             file_name = os.path.basename(file_path)
-            reference = replace_sentence(test_dataset['sentence'])
-            reference = strip_special_chars(reference)
-            generate = pipe(audio_info, generate_kwargs={"language": "korean"})
+            reference = english_normalize(test_dataset['sentence'])
+            generate = pipe(audio_info, generate_kwargs={"language": "english"})
             prediction = generate['text'].strip()
-            prediction = strip_special_chars(prediction)
+            prediction = english_normalize(prediction)
             measures = compute_measures(reference, prediction)
             substitutions = measures['substitutions']
             insertions = measures['insertions']
@@ -103,7 +96,7 @@ if __name__ == "__main__":
             break
 
     df = pd.DataFrame(Eval_list)
-    fpath = "resultEval/korean_wer_eval.csv"
+    fpath = "resultEval/english_wer_eval.csv"
     df.to_csv(fpath, encoding="utf-8-sig", index=False)
     averages = round(df["WER"].mean(), 5)
     print(f"WER : {averages*100}%")

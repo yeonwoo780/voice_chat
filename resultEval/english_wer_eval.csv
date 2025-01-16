@@ -1,0 +1,31 @@
+﻿num,language,file_path,file_name,reference,prediction,S,I,D,N,WER
+1,english,en_dev_0/common_voice_en_20938.mp3,common_voice_en_20938.mp3,the boy noticed that the owner of the bar stood nearby listening attentively to their conversation ,the boy noticed that the owner of the bar stood nearby listening attentively to their conversation ,0,0,0,16,0.0
+2,english,en_dev_0/common_voice_en_37607972.mp3,common_voice_en_37607972.mp3,the number of chime sets matches the number of quarter hours that have passed ,the number of chimesets matches the number of quarter hours that have passed ,1,0,1,14,0.14286
+3,english,en_dev_0/common_voice_en_13901.mp3,common_voice_en_13901.mp3,we don t have the budget to produce it in studio quality ,we don t have the budget to produce it in studio quality ,0,0,0,12,0.0
+4,english,en_dev_0/common_voice_en_30699821.mp3,common_voice_en_30699821.mp3,the warehouses of megapolis ukraine in six cities were blocked by activists ,the warehouses of megapolis ukraine in six cities were blocked by activists ,0,0,0,12,0.0
+5,english,en_dev_0/common_voice_en_34891886.mp3,common_voice_en_34891886.mp3,the other phase is mostly silica which is insoluble ,the outer face is mostly silica which is insoluble ,2,0,0,9,0.22222
+6,english,en_dev_0/common_voice_en_18170496.mp3,common_voice_en_18170496.mp3,i am going to ,i am going to,0,0,0,4,0.0
+7,english,en_dev_0/common_voice_en_92813.mp3,common_voice_en_92813.mp3,if he ever decided to leave them they would suffer ,if he ever decided to leave them they would suffer ,0,0,0,10,0.0
+8,english,en_dev_0/common_voice_en_36376161.mp3,common_voice_en_36376161.mp3,he was charged with misdemeanor and released shortly after ,he was charged with misdemeanor and released shortly after ,0,0,0,9,0.0
+9,english,en_dev_0/common_voice_en_38247207.mp3,common_voice_en_38247207.mp3,in the past the petrel population was severely affected by introduced mammals ,in the past the petrel population was severely affected by introduced mammals ,0,0,0,12,0.0
+10,english,en_dev_0/common_voice_en_37326531.mp3,common_voice_en_37326531.mp3,it is believed to be the first nova whose spectrum was recorded ,it is believed to be the first nova whose spectrum was recorded ,0,0,0,12,0.0
+11,english,en_dev_0/common_voice_en_13496.mp3,common_voice_en_13496.mp3,but most important he was able every day to live out his dream ,but most important he was able every day to live out his dream ,0,0,0,13,0.0
+12,english,en_dev_0/common_voice_en_31460312.mp3,common_voice_en_31460312.mp3,they are the only surviving members of the expedition ,they are the only surviving members of the expedition ,0,0,0,9,0.0
+13,english,en_dev_0/common_voice_en_36376159.mp3,common_voice_en_36376159.mp3,sixty four clubs participate each season ,64 clubs participate each season ,1,0,1,6,0.33333
+14,english,en_dev_0/common_voice_en_72994.mp3,common_voice_en_72994.mp3,one is loved because one is loved ,one is loved because one is loved ,0,0,0,7,0.0
+15,english,en_dev_0/common_voice_en_39753788.mp3,common_voice_en_39753788.mp3,it is classed as a furth by the scottish mountaineering club ,it is clasters of firth by the scottish mountaineering club ,3,0,1,11,0.36364
+16,english,en_dev_0/common_voice_en_168966.mp3,common_voice_en_168966.mp3, i had to test your courage the stranger said ,i had to test your courage with a stranger s aid ,2,2,0,9,0.44444
+17,english,en_dev_0/common_voice_en_529604.mp3,common_voice_en_529604.mp3, so you know about love the boy said ,so you know about love the boy said ,0,0,0,8,0.0
+18,english,en_dev_0/common_voice_en_35122045.mp3,common_voice_en_35122045.mp3,the genus was first described by johann hedwig ,the genus was first described by johann hirwin ,1,0,0,8,0.125
+19,english,en_dev_0/common_voice_en_32280983.mp3,common_voice_en_32280983.mp3,nat clashed with the hungarian authorities over his actions ,ned clashed with the hungarian authorities over his actions which were then prohibited ,1,4,0,9,0.55556
+20,english,en_dev_0/common_voice_en_11353.mp3,common_voice_en_11353.mp3,you want a drink or don t you ,you want a drink or don t you ,0,0,0,8,0.0
+21,english,en_dev_0/common_voice_en_38247208.mp3,common_voice_en_38247208.mp3,their current home pitch is malahide castle ,their current home pitch is malhide castle ,1,0,0,7,0.14286
+22,english,en_dev_0/common_voice_en_37607969.mp3,common_voice_en_37607969.mp3,after completing the delivery the destroyers prepared to bombard henderson field at lunga point ,after completing the delivery the destroyers prepared to bombard henderson field at lunga point ,0,0,0,14,0.0
+23,english,en_dev_0/common_voice_en_27484.mp3,common_voice_en_27484.mp3, what is it you re looking for asked the old merchant ,what is it you re looking for asked the old merchant ,0,0,0,11,0.0
+24,english,en_dev_0/common_voice_en_33606187.mp3,common_voice_en_33606187.mp3,kareem daniel grew up on the south side of chicago ,kareem daniel grew up on the south side of chicago ,0,0,0,10,0.0
+25,english,en_dev_0/common_voice_en_687943.mp3,common_voice_en_687943.mp3,what difference does it make what time it is ,what difference does it make what time it is ,0,0,0,9,0.0
+26,english,en_dev_0/common_voice_en_34891885.mp3,common_voice_en_34891885.mp3,it is based in redwood city california ,it is based in redwood city california ,0,0,0,7,0.0
+27,english,en_dev_0/common_voice_en_12685.mp3,common_voice_en_12685.mp3,the boy mumbled an answer that allowed him to avoid responding to her question ,the boy mumbled an answer that allowed him to avoid responding to her question ,0,0,0,14,0.0
+28,english,en_dev_0/common_voice_en_36376158.mp3,common_voice_en_36376158.mp3,merry christmas charlie manson ,merry christmas charlie manson,0,0,0,4,0.0
+29,english,en_dev_0/common_voice_en_556871.mp3,common_voice_en_556871.mp3,no that s not what i mean ,no that s not what i mean ,0,0,0,7,0.0
+30,english,en_dev_0/common_voice_en_38570594.mp3,common_voice_en_38570594.mp3,the school colors are black red and silver ,the school colors are black red and silver ,0,0,0,8,0.0

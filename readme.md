@@ -72,6 +72,7 @@ pip install -r requirements_macos.txt
 
 ### Evaluation Dataset : common_voice_17_0
 
+[link](https://huggingface.co/datasets/mozilla-foundation/common_voice_17_0)
 - seed : 42
 - down_vote : 0
 
@@ -86,9 +87,9 @@ pip install -r requirements_macos.txt
 | --- | --- | --- |
 | Dataset | common_voice_17_0 | common_voice_17_0 |
 | Len | 30  | 30  |
-| Wer | 14.71%  |     |
-| EvalCode |  Eval/korean_wer.py [link](Eval/korean_wer.py)   |     |
-| resultFile |  resultEval/korean_wer_eval.csv [link](resultEval/korean_wer_eval.csv)   |     |
+| Wer | 14.71% | 7.77% |
+| EvalCode |  Eval/korean_wer.py [code](Eval/korean_wer.py)   | Eval/english_wer.py [code](Eval/english_wer.py)    |
+| resultFile |  resultEval/korean_wer_eval.csv [file](resultEval/korean_wer_eval.csv)   | resultEval/english_wer_eval.csv [file](resultEval/english_wer_eval.csv)    |
 
 ## Run
 
@@ -115,7 +116,7 @@ streamlit run web_app_chat.py
 
 - pip install coqui-tts
 - pip install hangul-romanize # korean
-- sample notebooks[notebooks](notebooks/tts/XTTS-v2.ipynb)
+- sample notebooks [notebooks](notebooks/tts/XTTS-v2.ipynb)
 
 **language 지원**
 - 한국어 O ko
@@ -128,7 +129,7 @@ streamlit run web_app_chat.py
 
 ### bark [url](https://huggingface.co/suno/bark)
 
-- sample notebooks[notebooks](notebooks/tts/bark.ipynb)
+- sample notebooks [notebooks](notebooks/tts/bark.ipynb)
 
 **language 지원**
 - 한국어 O ko
@@ -144,7 +145,7 @@ streamlit run web_app_chat.py
 
 ### fish-speech [url](https://github.com/fishaudio/fish-speech/tree/main)
 
-- sample notebooks errors[notebooks](notebooks/tts/fish-speech.ipynb)
+- sample notebooks errors [notebooks](notebooks/tts/fish-speech.ipynb)
 
 **현재 target voice의 path읽는 곳에서 에러 절대경로로 해도 에러 발생**
 
