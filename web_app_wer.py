@@ -102,6 +102,13 @@ with st.form('Wer Eval', clear_on_submit=True):
         st.markdown(f"### 발화자 음성\n{embed}", unsafe_allow_html=True)
         st.markdown(f"- **원본 음성 텍스트**:    {evalinfo['reference']}", unsafe_allow_html=True)
         st.markdown(f"- **STT 모델 예측 텍스트**:    {evalinfo['prediction']}", unsafe_allow_html=True)
+        st.markdown(f"- **원본 음성 텍스트 구절**:    {evalinfo['truth']}", unsafe_allow_html=True)
+        st.markdown(f"- **예측 텍스트 구절**:    {evalinfo['hypothesis']}", unsafe_allow_html=True)
+        st.markdown(f"- **S**:    {evalinfo['S']}", unsafe_allow_html=True)
+        st.markdown(f"- **I**:    {evalinfo['I']}", unsafe_allow_html=True)
+        st.markdown(f"- **D**:    {evalinfo['D']}", unsafe_allow_html=True)
+        st.markdown(f"- **N**:    {evalinfo['N']}", unsafe_allow_html=True)
+        st.markdown(f"- **WER**:    {evalinfo['WER']}", unsafe_allow_html=True)
 
         evalinfo['num'] = st.session_state.idx
         st.session_state.Werlist.append(evalinfo['WER'])
