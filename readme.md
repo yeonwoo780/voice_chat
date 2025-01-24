@@ -76,6 +76,12 @@ pip install -r requirements_macos.txt
 - seed : 42
 - down_vote : 0
 
+- 평가용 streamlit
+```bash
+streamlit run web_app_wer.py
+streamlit run web_app_wer.py --browser.serverPort 8502
+```
+
 ### WER (Word Error Rate) : (S+D+I)/N
 
 - D : 음성 인식된 텍스트에 잘못 삭제된 단어 수
