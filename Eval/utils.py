@@ -29,14 +29,23 @@ def replace_english(reference, prediction):
     return reference, prediction
 
 def Evalinfo(reference, prediction, language):
+    """
+    1. reference, prediction 각각 language에 맞는 전처리
+    2. 
+    """
+    # 전처리
     if language == "korean":
         reference, prediction = replace_korean(reference, prediction)
     elif language == "english":
         reference, prediction = replace_english(reference, prediction)
-        
+
+    # Eval 값 load
     measures = compute_measures(reference, prediction)
+    # truth에서 0번째 값만 load
     truth = measures['truth'][0]
+    # hypothesis에서 0번째 값만 load
     hypothesis = measures['hypothesis'][0]
+    # S,I,D,N,WER 값 load
     substitutions = measures['substitutions']
     insertions = measures['insertions']
     deletions = measures['deletions']
