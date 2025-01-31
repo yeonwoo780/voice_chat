@@ -86,7 +86,7 @@ with st.sidebar:
         st.rerun()
 
 audio = audiorecorder("", "")
-reference = st.text_area('WER 평가를 위해 말씀하신 내용을 직접 입력해주세요 (엔터키를 입력하지 마세요!)')
+reference = st.text_area('WER 평가를 위해 말씀하신 내용을 직접 입력해주세요 (특수문자, 엔터키 제외)')
 
 # Session state에 Evallist 초기화
 if "Evallist" not in st.session_state:
